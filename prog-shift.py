@@ -31,11 +31,11 @@ rot_mask = np.zeros((1,1), np.uint8)
 
 allIm = []
 count = 0
-for img in glob.glob("./train/*.jpg"):
+for img in glob.glob("./new-train/*.jpg"):
     count += 1
     n = cv2.imread(img)[305:605, 655: 955]
     allIm.append(n)
-    if count > 16: break
+    if count > 70: break
 orig = allIm[0]
 image_value = "image"
 image_val_max = len(allIm) - 1
@@ -82,6 +82,14 @@ def Threshold_Demo(val):
     mask_rot_img = cv2.bitwise_and(orig, orig, mask=rot_mask)
     img = cv2.cvtColor(mask_rot_img, cv2.COLOR_BGR2RGB)
     src_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+
+    hsvImg = cv2.cvtColor(mask_rot_img, cv2.COLOR_BGR2HSV)
+    cv2.imshow("hsv", hsvImg)
+    hsv_low = np.array([1, 240, 90])
+    hsv_high = np.array([220, 140, 140])
+    hsvMask = cv2.inRange(hsvImg, hsv_low, hsv_high)
+    cv2.imshow("hsv mask", hsvMask)
 
     cv2.imshow("orig", orig)
     cv2.imshow("color", img)

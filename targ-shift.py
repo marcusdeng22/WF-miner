@@ -443,6 +443,10 @@ def Threshold_Demo(val):
     else:
         print("bad classification")
 
+    x = round(origin_x + math.degrees(math.cos(math.radians(245 + 90))) * 100)
+    y = round(origin_x + math.degrees(math.sin(math.radians(245 + 90))) * 100)
+    cv2.line(houghFiltered, (origin_x, origin_y), (x,y), (0,255,0), 1, cv2.LINE_AA)
+
     if len(center) != 0:
 ##        a = math.cos(center[0])
 ##        b = math.sin(center[0])
