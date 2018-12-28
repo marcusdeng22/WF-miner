@@ -2,6 +2,7 @@ import cv2
 import math
 import numpy as np
 import glob
+import time
 
 all_mask = cv2.imread("./filled/20181226213622_1.jpg")[305:605, 655:955]
 cv2.imshow("mask orig", all_mask)
@@ -111,6 +112,7 @@ def match(val):
 ##    manD = cv2.getTrackbarPos(tempMeth, window_name)
 ##    manD *= 15
 ##    for deg in range(manD, manD+1, 15):
+    start_time= time.time()
     pos_img = test_img.copy()
     for deg in range(0, 180, 5):
         if deg > 90:
@@ -190,6 +192,7 @@ def match(val):
             print("pos at", curD-5-offset)
             break
     print("done with", curD)
+    print("time:", time.time()-start_time)
     print()
 
 ##        match_meth = eval(methods[cv2.getTrackbarPos(tempMeth, window_name)])

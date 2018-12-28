@@ -26,8 +26,26 @@ slope_eps = 2
 dist_eps = 11
 merge_eps = 8
 
-def analyze(position):
-    img = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(655, 305, 955, 605))), cv2.COLOR_BGR2GRAY)
+##current_mouse_time = time.time()
+##timeTick = 5/72    #number of seconds per tick
+
+all_mask = cv2.imread("./filled/20181226213622_1.jpg")[305:605, 655:955]
+mask_w = 18
+mask_h = 3.2
+mask_r = 117
+mask_cx = 144
+mask_cy = 145
+mask_y = 2 * math.degrees(math.asin((mask_h/2)/mask_r))
+mask_x = (5 - mask_y) / 2
+mask_z = (mask_y / 2) + mask_x
+zero_mask = np.zeros((all_mask.shape[0], all_mask.shape[1]), np.uint8)
+
+mask_eps = 8
+mask_matchLim = 0.11
+
+def analyze():
+    originalImg = np.array(ImageGrab.grab(bbox=(655, 305, 955, 605)))
+    img = cv2.cvtColor(originalImg, cv2.COLOR_BGR2GRAY)
     mask_c = np.ones((img.shape[0], img.shape[1]), np.uint8)
     cv2.circle(mask_c, (145, 145), 125, (0,0,0), thickness=12)  #mask on progress ring
     cv2.circle(mask_c, (145, 145), 50, (0,0,0), thickness=-1)   #mask on center reticle
@@ -67,7 +85,7 @@ def analyze(position):
                 houghRes1.append([math.pi, rho])
         cv2.circle(houghIm, (origin_x, origin_y), merge_eps, (0,0,255), 1)
     else:
-        print("no mining detected")
+##        print("no mining detected")
 ##                time.sleep(1)
         return
     cv2.imshow("hough", houghIm)
@@ -204,45 +222,122 @@ def analyze(position):
         center = [math.atan2(y1 - origin_y, x1 - origin_x)]
         
     else:
-        print("bad classification")
+##        print("bad classification")
+        return
 
-    #draw current position
-    x = round(origin_x + math.degrees(math.cos(math.radians(position + 90))) * 100)
-    y = round(origin_x + math.degrees(math.sin(math.radians(position + 90))) * 100)
-    cv2.line(houghFiltered, (origin_x, origin_y), (x,y), (0,255,0), 1, cv2.LINE_AA)
+##    #draw current position
+##    clock_offset = 5
+##    diffTime = time.time() - current_mouse_time
+##    print(diffTime/timeTick)
+##    diffTime = round(diffTime/timeTick) * 5.95
+##    x = round(origin_x + math.degrees(math.cos(math.radians(diffTime + clock_offset + 90))) * 100)
+##    y = round(origin_x + math.degrees(math.sin(math.radians(diffTime + clock_offset + 90))) * 100)
+##    cv2.line(houghFiltered, (origin_x, origin_y), (x,y), (0,255,0), 1, cv2.LINE_AA)
+
+    originalImg = np.array(ImageGrab.grab(bbox=(655, 305, 955, 605)))[...,::-1]
+    cv2.imshow("orig", originalImg)
+
+    #find current position
+    ''''''
+    posImg = originalImg.copy()
+    prevMiss = 0
+    for deg in range(0, 180, 5):
+        if deg > 90:
+            offset = 0
+        else:
+            offset = 1
+        curD = (270 + deg + offset)
+        if curD >= 360: curD -= 360
+
+        rot_mask = zero_mask
+
+        Ax = mask_cx + mask_r * math.cos(math.radians(mask_x + curD))
+        Ay = mask_cy + mask_r * math.sin(math.radians(mask_x + curD))
+        Bx = mask_cx + mask_r * math.cos(math.radians(mask_x + mask_y + curD))
+        By = mask_cy + mask_r * math.sin(math.radians(mask_x + mask_y + curD))
+
+        Cx = Ax + mask_w * math.cos(math.radians(mask_z + curD))
+        Cy = Ay + mask_w * math.sin(math.radians(mask_z + curD))
+        Dx = Bx + mask_w * math.cos(math.radians(mask_z + curD))
+        Dy = By + mask_w * math.sin(math.radians(mask_z + curD))
+
+        pts = np.array([[Ax,Ay], [Bx,By], [Cx, Cy], [Dx, Dy]], np.int32)
+        rect= cv2.minAreaRect(pts)
+        rot = cv2.boxPoints(rect)
+        rot = np.int0(rot)
+        cv2.drawContours(rot_mask, [rot], 0, (255,255,255), -1)
+
+        b_x,b_y,b_w,b_h = cv2.boundingRect(pts)
+
+        curAll = cv2.bitwise_and(all_mask, all_mask, mask=rot_mask)
+        curTest = cv2.bitwise_and(originalImg, originalImg, mask=rot_mask)
+
+        cv2.imshow("mask img", curAll)
+        cv2.imshow("cur mask", curTest)
+
+        template = curAll[b_y:b_y+b_h, b_x:b_x+b_w]
+        temp_seg = curTest[b_y:b_y+b_h, b_x:b_x+b_w]
+
+##        curAll = all_mask[b_y:b_y+b_h, b_x:b_x+b_w]
+##        curTest = originalImg[b_y:b_y+b_h, b_x:b_x+b_w]
+##
+##        template = cv2.bitwise_and(curAll, curAll, mask=rot_mask)
+##        temp_seg = cv2.bitwise_and(curTest, curTest, mask=rot_mask)
+        
+        acc = 0
+        count = 0
+        for outer in range(len(template)):
+            for innerx in range(len(template[outer])):
+                for innery in range(len(template[outer][innerx])):
+                    if template[outer][innerx][innery] == 0:
+                        continue
+                    if abs(int(template[outer][innerx][innery]) - int(temp_seg[outer][innerx][innery])) < mask_eps:
+                        acc += 1
+                    count += 1
+##        print(acc/count)
+        if acc/count > mask_matchLim:
+            prevMiss = 0
+            #draw line
+            x = round(origin_x + math.degrees(math.cos(math.radians(curD + 2.5))) * 200)
+            y = round(origin_y + math.degrees(math.sin(math.radians(curD + 2.5))) * 200)
+            cv2.line(posImg, (origin_x, origin_y), (x,y), (0,255,0), 1, cv2.LINE_AA)
+        else:
+            if prevMiss > 0:
+                break
+            prevMiss += 1
+            x = round(origin_x + math.degrees(math.cos(math.radians(curD + 2.5))) * 200)
+            y = round(origin_y + math.degrees(math.sin(math.radians(curD + 2.5))) * 200)
+            cv2.line(posImg, (origin_x, origin_y), (x,y), (255,0,0), 1, cv2.LINE_AA)
+    cv2.imshow("pos img", posImg)
+    ''''''
 
     if len(center) != 0:
         radius = 100
         x = round(origin_x + math.degrees(math.cos(center[0])) * radius)
         y = round(origin_y + math.degrees(math.sin(center[0])) * radius)
-        cv2.line(houghFiltered, (origin_x, origin_y), (x,y), (255,0,0), 1, cv2.LINE_AA)
+##        cv2.line(houghFiltered, (origin_x, origin_y), (x,y), (255,0,0), 1, cv2.LINE_AA)
+        cv2.line(houghFiltered, (origin_x, origin_y), (x,y), (0,0,255), 1, cv2.LINE_AA)
     
     cv2.imshow("hough filtered", houghFiltered)
 
+##    print()
+
     return center
 
-pos = 0
-while (True):   #perhaps add a sleep?
+while (True):
     #if key pressed start loooking, otherwise sleep
     leftCurState = win32api.GetKeyState(0x01)
     if leftCurState != leftState:
         leftState = leftCurState
         if leftCurState < 0:
-            pos = 0
-    else:
-        if leftCurState < 0:
-            pos += 5
-##        if leftCurState < 0:
-##            #we are pressed, so start identification
-##            print("down")
-##            analyze()
-##    else:
-##        if leftCurState < 0:
-####            print("hold down")
-##            analyze()
+            print("down")
+            current_mouse_time = time.time()
+        else:
+            print("up")
 
     if leftCurState < 0:
-        centers = analyze(pos)
+        analyze()
+##        centers = analyze()
 
     
             
