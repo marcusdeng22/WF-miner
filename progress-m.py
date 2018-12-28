@@ -115,6 +115,7 @@ def match(val):
     start_time= time.time()
     pos_img = test_img.copy()
     for deg in range(0, 180, 5):
+        mask_start = time.time()
         if deg > 90:
             offset = 0
         else:
@@ -163,6 +164,9 @@ def match(val):
 ##        print(curTest[by:by+bh, bx:bx+bw])
 
         temp_seg = curTest[b_y:b_y+b_h, b_x:b_x+b_w]
+        print("masking time:", time.time() - mask_start)
+
+        matching_time = time.time()
 
         eps = 8
         matchLim = 0.11
@@ -188,6 +192,8 @@ def match(val):
             print("at pos")
         else:
             print("not at pos")
+
+        print("matching time:", time.time() - matching_time)
         if acc / count <= matchLim:
             print("pos at", curD-5-offset)
             break

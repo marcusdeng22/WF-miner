@@ -209,9 +209,10 @@ def Threshold_Demo(val):
         b = math.sin(houghRes2[x][0])
         x0 = a * houghRes2[x][1]
         y0 = b * houghRes2[x][1]
-        pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-        pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-        cv2.line(houghFiltered, pt1, pt2, (0,0,255), 1, cv2.LINE_AA)
+        #remove drawing for timing
+##        pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+##        pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+##        cv2.line(houghFiltered, pt1, pt2, (0,0,255), 1, cv2.LINE_AA)
 ##    print(houghRes2)
 
     #now find center(s) of target(s)
@@ -259,13 +260,15 @@ def Threshold_Demo(val):
         print("bad classification")
 
     if len(center) != 0:
-        radius = 100
-        x = round(origin_x + math.degrees(math.cos(center[0])) * radius)
-        y = round(origin_y + math.degrees(math.sin(center[0])) * radius)
-        cv2.line(houghFiltered, (origin_x, origin_y), (x,y), (255,0,0), 1, cv2.LINE_AA)
-    
-    cv2.imshow("hough filtered", houghFiltered)
-    print("done with hough; time to run:", time.time() - startTime)
+        print("line at", center[0])
+        #remove drawing for timing
+##        radius = 100
+##        x = round(origin_x + math.degrees(math.cos(center[0])) * radius)
+##        y = round(origin_y + math.degrees(math.sin(center[0])) * radius)
+##        cv2.line(houghFiltered, (origin_x, origin_y), (x,y), (255,0,0), 1, cv2.LINE_AA)
+##    
+##    cv2.imshow("hough filtered", houghFiltered)
+    print("done with hough; total time to run:", time.time() - startTime)
     print()
 
 ## [window]
