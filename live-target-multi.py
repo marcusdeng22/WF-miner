@@ -34,7 +34,7 @@ merge_eps = 8
 ##current_mouse_time = time.time()
 ##timeTick = 5/72    #number of seconds per tick
 
-all_mask = cv2.imread("./filled/20181226213622_1.jpg")[305:605, 655:955]
+all_mask = cv2.imread("./filledImage.jpg")[305:605, 655:955]
 mask_w = 18
 mask_h = 3.2
 mask_r = 117
